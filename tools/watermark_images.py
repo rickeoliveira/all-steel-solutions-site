@@ -1,6 +1,7 @@
 """Apply the All Steel attribution directly to public product photos."""
 
 from pathlib import Path
+import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -22,8 +23,9 @@ FONT = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
 def watermark(path: Path) -> None:
     source = Image.open(path).convert("RGBA")
     width, height = source.size
-    caption = "© ALL STEEL SOLUTIONS"
-    size = max(16, round(min(width, height) * 0.078))
+    hero = path.name == "caminhao-betoneira.jpg"
+    caption = "© ALL STEEL" if hero else "© ALL STEEL SOLUTIONS"
+    size = 18 if hero else max(16, round(min(width, height) * 0.078))
     font = ImageFont.truetype(FONT, size)
     box = ImageDraw.Draw(source).textbbox((0, 0), caption, font=font, stroke_width=1)
     text_width, text_height = box[2] - box[0], box[3] - box[1]
@@ -37,7 +39,7 @@ def watermark(path: Path) -> None:
         stroke_width=2,
         stroke_fill=(12, 22, 28, 165),
     )
-    text_layer = text_layer.rotate(22, expand=True, resample=Image.Resampling.BICUBIC)
+    text_layer = text_layer.rotate(16 if hero else 22, expand=True, resample=Image.Resampling.BICUBIC)
     x = (width - text_layer.width) // 2
     y = (height - text_layer.height) // 2
     source.alpha_composite(text_layer, (x, y))
@@ -71,5 +73,5 @@ def watermark(path: Path) -> None:
         source.convert("RGB").save(path, format="WEBP", quality=92)
 
 
-for filename in PHOTOS:
+for filename in (sys.argv[1:] or PHOTOS):
     watermark(ASSETS / filename)
