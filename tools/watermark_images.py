@@ -17,7 +17,21 @@ PHOTOS = (
     "guarnicao.webp",
     "rolo-apoio.webp",
 )
-FONT = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
+FONT = next(
+    (
+        path
+        for path in (
+            "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        )
+        if Path(path).exists()
+    ),
+    None,
+)
+
+
+def get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    return ImageFont.truetype(FONT, size) if FONT else ImageFont.load_default(size=size)
 
 
 def watermark(path: Path) -> None:
@@ -26,7 +40,7 @@ def watermark(path: Path) -> None:
     hero = path.name == "caminhao-betoneira.jpg"
     caption = "© ALL STEEL" if hero else "© ALL STEEL SOLUTIONS"
     size = 18 if hero else max(16, round(min(width, height) * 0.078))
-    font = ImageFont.truetype(FONT, size)
+    font = get_font(size)
     box = ImageDraw.Draw(source).textbbox((0, 0), caption, font=font, stroke_width=1)
     text_width, text_height = box[2] - box[0], box[3] - box[1]
     text_layer = Image.new("RGBA", (text_width + 30, text_height + 30))
@@ -45,7 +59,7 @@ def watermark(path: Path) -> None:
     source.alpha_composite(text_layer, (x, y))
 
     label = "© All Steel Solutions"
-    label_font = ImageFont.truetype(FONT, max(11, round(width * 0.027)))
+    label_font = get_font(max(11, round(width * 0.027)))
     label_box = ImageDraw.Draw(source).textbbox((0, 0), label, font=label_font)
     label_width = label_box[2] - label_box[0]
     label_height = label_box[3] - label_box[1]
